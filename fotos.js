@@ -34,66 +34,100 @@ async function fReducir(file){
   return new Promise(ok=>c.toBlob(ok,"image/jpeg",FOTO.calidad));
 }
 
-/* ---- mensaje y envío ---- */
-function fTexto(c,seg,nota){
-  const e=fEnt().nombre;
-  return `Hola${e?" "+e:""}, te envío mi foto de ${c.elem} – ${c.prog}.`+(seg?` Tiempo sostenido: ${seg} s.`:"")+(nota?` ${nota}`:"");
+/* ---- mensaje y envío directo a Discord ---- */
+function fTexto(c, seg, nota, alumno) {
+  const e = fEnt().nombre;
+  const quien = alumno ? `**Alumno:** ${alumno}\n` : "";
+  return `${quien}💪 **Progresión:** ${c.elem} – ${c.prog}` +
+         (seg ? `\n⏱️ **Tiempo sostenido:** ${seg} s` : "") +
+         (nota ? `\n📝 **Nota para ${e || "el entrenador"}:** ${nota}` : "");
 }
-function fLinks(texto){
-  const e=fEnt(),t=encodeURIComponent(texto);
-  if(e.whatsapp)return `https://wa.me/${String(e.whatsapp).replace(/\D/g,"")}?text=${t}`;
-  if(e.telegram)return `https://t.me/${String(e.telegram).replace(/^@/,"")}`;
-  return "";
-}
-async function fEnviar(blob,texto,nombre){
-  const f=new File([blob],nombre,{type:"image/jpeg"});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){
-    try{await navigator.share({files:[f],text:texto,title:"Progresión de calistenia"});return "ok"}
-    catch(e){if(e&&e.name==="AbortError")return "cancel"}
+
+async function fEnviar(blob, texto, nombre) {
+  const webhook = fEnt().discordWebhook;
+  if (!webhook) return "manual";
+
+  const formData = new FormData();
+  formData.append("content", texto);
+  formData.append("file", blob, nombre);
+
+  try {
+    const res = await fetch(webhook, {
+      method: "POST",
+      body: formData
+    });
+    return res.ok ? "ok" : "error";
+  } catch (e) {
+    return "error";
   }
-  return "manual";
 }
 
 /* ---- ventana de envío ---- */
-function fModal(blob,c,opt){
-  opt=opt||{};
-  let m=document.getElementById("fmodal");if(m)m.remove();
-  m=document.createElement("div");m.id="fmodal";m.className="fm";
-  const url=URL.createObjectURL(blob),nom=fNombre();
-  m.innerHTML=`<div role="dialog" aria-modal="true" aria-label="Enviar foto">
+function fModal(blob, c, opt) {
+  opt = opt || {};
+  let m = document.getElementById("fmodal"); if (m) m.remove();
+  m = document.createElement("div"); m.id = "fmodal"; m.className = "fm";
+  const url = URL.createObjectURL(blob), nom = fNombre();
+  const alumnoGuardado = localStorage.getItem("cal_alumno_nombre") || "";
+
+  m.innerHTML = `<div role="dialog" aria-modal="true" aria-label="Enviar foto">
     <h3 style="margin-top:0">${esc(c.elem)} · ${esc(c.prog)}</h3>
     <img src="${url}" alt="Tu foto">
-    <label class="fl">Tiempo que sostuviste (segundos)<input id="fseg" type="number" min="0" inputmode="numeric" value="${opt.seg||""}"></label>
-    <label class="fl">Nota para ${esc(nom)} (cómo te sentiste, dudas)<textarea id="fnota" rows="3">${esc(opt.nota||"")}</textarea></label>
+    <label class="fl">Tu nombre<input id="falumno" type="text" placeholder="Ej. Carlos" value="${esc(alumnoGuardado)}"></label>
+    <label class="fl">Tiempo que sostuviste (segundos)<input id="fseg" type="number" min="0" inputmode="numeric" value="${opt.seg || ""}"></label>
+    <label class="fl">Nota para ${esc(nom)} (cómo te sentiste, dudas)<textarea id="fnota" rows="3">${esc(opt.nota || "")}</textarea></label>
     <p class="hint" id="fmsg"></p>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="fsend">Enviar a ${esc(nom)}</button>
-      ${opt.guardada?"":'<button class="btn sec" id="fsave">Solo guardar</button>'}
+      ${opt.guardada ? "" : '<button class="btn sec" id="fsave">Solo guardar</button>'}
       <button class="btn sec" id="fcancel">Cerrar</button></div></div>`;
+
   document.body.appendChild(m);
-  let guardada=!!opt.guardada;
-  const q=id=>m.querySelector("#"+id),msg=t=>{q("fmsg").innerHTML=t};
-  const cerrar=()=>{URL.revokeObjectURL(url);m.remove();fotoInit()};
-  const datos=()=>({seg:+q("fseg").value||0,nota:q("fnota").value.trim()});
-  const guardar=async()=>{
-    if(guardada)return true;const d=datos();
-    try{await fAdd({k:c.k,elem:c.elem,prog:c.prog,t:Date.now(),s:d.seg,nota:d.nota,blob});guardada=true;return true}
-    catch(e){msg("No se pudo guardar en este navegador (modo privado o sin espacio).");return false}
+  let guardada = !!opt.guardada;
+  const q = id => m.querySelector("#" + id), msg = t => { q("fmsg").innerHTML = t };
+  const cerrar = () => { URL.revokeObjectURL(url); m.remove(); fotoInit() };
+  const datos = () => ({
+    alumno: q("falumno").value.trim(),
+    seg: +q("fseg").value || 0,
+    nota: q("fnota").value.trim()
+  });
+
+  const guardar = async () => {
+    if (guardada) return true; const d = datos();
+    try { await fAdd({ k: c.k, elem: c.elem, prog: c.prog, t: Date.now(), s: d.seg, nota: d.nota, blob }); guardada = true; return true }
+    catch (e) { msg("No se pudo guardar en este navegador (modo privado o sin espacio)."); return false }
   };
-  q("fcancel").onclick=cerrar;
-  m.addEventListener("click",e=>{if(e.target===m)cerrar()});
-  if(q("fsave"))q("fsave").onclick=async()=>{if(await guardar())cerrar()};
-  q("fsend").onclick=async()=>{
-    const d=datos(),texto=fTexto(c,d.seg,d.nota);
+
+  q("fcancel").onclick = cerrar;
+  m.addEventListener("click", e => { if (e.target === m) cerrar() });
+  if (q("fsave")) q("fsave").onclick = async () => { if (await guardar()) cerrar() };
+
+  q("fsend").onclick = async () => {
+    const d = datos();
+    if (d.alumno) localStorage.setItem("cal_alumno_nombre", d.alumno);
+    const texto = fTexto(c, d.seg, d.nota, d.alumno);
+    
+    const btn = q("fsend");
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    msg("");
+
     await guardar();
-    const r=await fEnviar(blob,texto,`${c.k}-${new Date().toISOString().slice(0,10)}.jpg`);
-    if(r==="ok"){cerrar();return}
-    if(r==="cancel"){msg("Envío cancelado. Puedes intentarlo de nuevo.");return}
-    const w=fLinks(texto),d2=URL.createObjectURL(blob);
-    msg(`Este navegador no permite adjuntar la foto directamente. 1) <a href="${d2}" download="${esc(c.k)}.jpg">Descarga la foto</a>`+
-        (w?` 2) <a href="${w}" target="_blank" rel="noopener">Abre el chat con ${esc(nom)}</a> y adjúntala.`:` 2) Envíasela a ${esc(nom)} por tu chat.`));
+    const r = await fEnviar(blob, texto, `${c.k}-${new Date().toISOString().slice(0, 10)}.jpg`);
+
+    if (r === "ok") {
+      msg(`✅ ¡Foto enviada con éxito a ${esc(nom)}!`);
+      setTimeout(cerrar, 1200);
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = `Enviar a ${esc(nom)}`;
+    const d2 = URL.createObjectURL(blob);
+    msg(`No se pudo enviar automáticamente (revisa tu internet o la URL del Webhook). Puedes <a href="${d2}" download="${esc(c.k)}.jpg">descargar la foto</a>.`);
   };
 }
+
 
 /* ---- sección dentro de cada progresión ---- */
 function fCtx(){const el=els()[S.e],pr=el.progresiones[S.p];return{k:key(el,S.p),elem:el.nombre,prog:pr.nombre}}
