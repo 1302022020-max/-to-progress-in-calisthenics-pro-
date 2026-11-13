@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estáticos · Calistenia</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F1B2D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Estáticos">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ECEEF0;--card:#fff;--ink:#0F1B2D;--mute:#5B6676;--line:#D3D8DE;--jalon:#2447F5;--empuje:#E8501A;--acc:var(--jalon);--ok:#1E8E5A}
+body[data-g="empuje"]{--acc:var(--empuje)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",sans-serif;margin:0;line-height:1;letter-spacing:.01em}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+header h1{font-size:clamp(40px,9vw,72px);font-weight:800}
+header p{margin:8px 0 0;color:var(--mute);max-width:52ch}
+.tabs{display:flex;gap:8px;margin:24px 0 12px}
+.tab{flex:1;border:2px solid var(--ink);background:transparent;color:var(--ink);font:800 24px "Barlow Condensed",sans-serif;padding:10px;cursor:pointer;border-radius:6px}
+.tab[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:999px;cursor:pointer;font:600 15px Barlow,sans-serif;color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.resumen{color:var(--mute);margin:0 0 16px}
+.grid{display:grid;grid-template-columns:260px 1fr;gap:20px}
+.ladder{list-style:none;margin:0;padding:0;position:relative}
+.ladder::before{content:"";position:absolute;left:19px;top:20px;bottom:20px;width:3px;background:var(--line)}
+.step{position:relative;display:flex;gap:12px;align-items:center;width:100%;border:0;background:transparent;text-align:left;padding:8px 6px;cursor:pointer;color:var(--ink);font:600 16px Barlow,sans-serif;border-radius:8px}
+.dot{flex:none;width:28px;height:28px;margin-left:6px;border-radius:50%;background:var(--card);border:3px solid var(--line);display:grid;place-items:center;font:800 13px "Barlow Condensed";color:var(--mute);z-index:1}
+.step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.step[aria-current=true]{background:var(--card)}
+.step[aria-current=true] .dot{border-color:var(--acc);color:var(--acc)}
+.step.done[aria-current=true] .dot{color:#fff}
+.panel{background:var(--card);border-radius:10px;padding:20px;border-top:6px solid var(--acc)}
+.panel h2{font-size:40px;font-weight:800}
+.obj{display:inline-block;margin:10px 0;background:var(--bg);padding:4px 10px;border-radius:6px;font-weight:600;font-size:14px}
+.video{aspect-ratio:16/9;background:var(--ink);border-radius:8px;overflow:hidden;margin:12px 0;display:grid;place-items:center;color:#9AA6B8}
+.video iframe,.video video{width:100%;height:100%;border:0}
+h3{font-size:22px;margin:18px 0 6px;font-weight:800}
+.panel ul{margin:0;padding-left:20px}
+.panel li{margin:3px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.btn{border:0;border-radius:8px;padding:12px 18px;font:800 20px "Barlow Condensed",sans-serif;cursor:pointer;background:var(--acc);color:#fff}
+.btn.sec{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.timer{font:800 44px "Barlow Condensed",sans-serif;min-width:96px}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.ladder::before{display:none}.ladder{display:flex;overflow-x:auto;gap:6px;padding-bottom:6px}.step{flex:none;width:auto;background:var(--card)}}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.mini{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:999px;font:600 14px Barlow,sans-serif;cursor:pointer}
+.mini[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stage3d{aspect-ratio:4/3;background:radial-gradient(ellipse at 50% 35%,#2A3548,#0B111B 75%);border-radius:8px;overflow:hidden;margin:10px 0;touch-action:none;cursor:grab}
+.stage3d:active{cursor:grabbing}
+.stage3d canvas{display:block;width:100%;height:100%}
+.hint{font-size:13px;color:var(--mute);margin:0}
+.lv{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px}.l3{background:#E5322D}.l2{background:#F28C28}.l1{background:#F2CC3B}
+.mus{list-style:none;padding:0!important}.mus li{margin:6px 0}.mus .lv{margin-left:0}
+</style>
+</head>
+<body data-g="jalon">
+<div class="wrap">
+  <header>
+    <h1>Estáticos</h1>
+    <p>Progresiones de calistenia para sostener posiciones: del primer intento al elemento completo.</p>
+  </header>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="chips" id="chips"></div>
+  <p class="resumen" id="resumen"></p>
+  <div class="grid">
+    <ol class="ladder" id="ladder"></ol>
+    <article class="panel" id="panel"></article>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="data.js"></script>
+<script src="poses.js"></script>
+<script src="muscles.js"></script>
+<script src="config.js"></script>
+<script src="fotos.js"></script>
+<script>
+const GRUPOS=[{id:"jalon",nombre:"Jalón"},{id:"empuje",nombre:"Empuje"}];
+let S={g:"jalon",e:0,p:0 },done={},tInt=null,tSec=0;
+try{done=JSON.parse(localStorage.getItem("calis-done")||"{}")}catch(e){}
+const save=()=>{try{localStorage.setItem("calis-done",JSON.stringify(done))}catch(e){}};
+const $=id=>document.getElementById(id);
+const els=()=>ELEMENTOS.filter(x=>x.grupo===S.g);
+const key=(el,i)=>el.id+"-"+i;
+
+function stopTimer(){clearInterval(tInt);tInt=null;tSec=0;stopSpeak()}
+function render(){
+  document.body.dataset.g=S.g;
+  const list=els(),el=list[S.e],pr=el.progresiones[S.p];
+  $("tabs").innerHTML=GRUPOS.map(g=>`<button class="tab" role="tab" aria-selected="${g.id===S.g}" data-g="${g.id}">${g.nombre}</button>`).join("");
+  $("chips").innerHTML=list.map((x,i)=>`<button class="chip" aria-pressed="${i===S.e}" data-e="${i}">${x.nombre}</button>`).join("");
+  $("resumen").textContent=el.resumen;
+  $("ladder").innerHTML=el.progresiones.map((p,i)=>`<li><button class="step ${done[key(el,i)]?"done":""}" aria-current="${i===S.p}" data-p="${i}"><span class="dot">${done[key(el,i)]?"✓":i+1}</span>${p.nombre}</button></li>`).join("");
+  const ok=!!done[key(el,S.p)];
+  $("panel").innerHTML=`<h2>${pr.nombre}</h2><span class="obj">Meta: ${pr.objetivo}</span>
+   <p>${pr.descripcion}</p>
+   <div class="modes"><button class="mini" data-b="mus" aria-pressed="${MODO==="mus"}">Músculos</button><button class="mini" data-b="cuerpo" aria-pressed="${MODO==="cuerpo"}">Cuerpo</button><button class="mini" data-v="0">Lateral</button><button class="mini" data-v="40">3/4</button><button class="mini" data-v="90">Frontal</button>${"speechSynthesis" in window?`<button class="mini" id="rbtn">Ver desde el inicio</button><button class="mini" id="vbtn">Explicar con voz</button>`:""}</div>
+   <div id="slot"></div>
+   ${musHTML(el)}
+   <h3>Claves</h3><ul>${pr.claves.map(c=>`<li>${c}</li>`).join("")}</ul>
+   <h3>Errores comunes</h3><ul>${pr.errores.map(c=>`<li>${c}</li>`).join("")}</ul>
+   <div class="row"><span class="timer" id="timer">0 s</span>
+   <button class="btn" id="tbtn">${tInt?"Parar":"Iniciar cronómetro"}</button>
+   <button class="btn sec ${ok?"on":""}" id="dbtn">${ok?"Dominada":"Marcar como dominada"}</button></div>
+   ${fotoHTML()}`;
+  $("timer").textContent=tSec+" s";
+  mountStage(pr);fotoInit();
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.g){S={g:t.dataset.g,e:0,p:0};stopTimer();render()}
+  else if(t.dataset.e!==undefined){S.e=+t.dataset.e;S.p=0;stopTimer();render()}
+  else if(t.dataset.p!==undefined){S.p=+t.dataset.p;stopTimer();render()}
+  else if(t.dataset.v!==undefined){setView(+t.dataset.v)}
+  else if(t.dataset.b){MODO=t.dataset.b;render()}
+  else if(t.id==="rbtn"){replay()}
+  else if(t.id==="vbtn"){speak()}
+  else if(t.id==="dbtn"){const k=key(els()[S.e],S.p);done[k]=!done[k];save();render()}
+  else if(t.id==="tbtn"){
+    if(tInt){clearInterval(tInt);tInt=null}
+    else{tSec=0;tInt=setInterval(()=>{tSec++;$("timer").textContent=tSec+" s"},1000)}
+    t.textContent=tInt?"Parar":"Iniciar cronómetro";$("timer").textContent=tSec+" s";
+  }
+});
+/* ================= Visor 3D ================= */
+let V=null,MODO="mus";
+const LVC={0:0xB5736B,1:0xF2CC3B,2:0xF28C28,3:0xE5322D};
+function musHTML(el){const a=ACT[el.id]||{},ids=Object.keys(a).sort((x,y)=>a[y][0]-a[x][0]);
+  return `<h3>Músculos que trabajan</h3><p class="hint"><i class="lv l3"></i>Principal <i class="lv l2"></i>Secundario <i class="lv l1"></i>Estabilizador</p><ul class="mus">${ids.map(i=>`<li><i class="lv l${a[i][0]}"></i><b>${MUS[i]}</b>: ${a[i][1]}</li>`).join("")}</ul>`}
+function frames(P,J){const D=a=>[Math.cos(rad(a)),Math.sin(rad(a))],F={torso:{A:J.hipC,B:J.shC,n:D(P.fa)}};
+  ["L","R"].forEach(k=>{F["arm"+k]={A:J["sh"+k],B:J["hand"+k],n:D(P.fa+P.a-P.t-180)};
+    F["thigh"+k]={A:J["hip"+k],B:J["knee"+k],n:D(P.fa+P["th"+k]-P.t-180)};
+    F["shin"+k]={A:J["knee"+k],B:J["foot"+k],n:D(P.fa+P["sh"+k]-P.t-180)}});return F}
+const UY=new THREE.Vector3(0,1,0);
+function ell(m,F,u,hl,f,z,rx,rz){const A=F.A,B=F.B;
+  m.position.set(A[0]+(B[0]-A[0])*u+F.n[0]*f,A[1]+(B[1]-A[1])*u+F.n[1]*f,A[2]+(B[2]-A[2])*u+z);
+  m.scale.set(rx,hl,rz);m.quaternion.setFromUnitVectors(UY,new THREE.Vector3(B[0]-A[0],B[1]-A[1],B[2]-A[2]).normalize())}
+function limb(m,a,b){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),d=B.clone().sub(A),l=d.length()||.001;
+  m.position.copy(A.clone().add(B).multiplyScalar(.5));m.scale.set(1,l,1);m.quaternion.setFromUnitVectors(UY,d.normalize())}
+function initViewer(){
+  if(V!==null)return V;
+  try{
+    const el=document.createElement("div");el.className="stage3d";
+    const rd=new THREE.WebGLRenderer({antialias:true,alpha:true});rd.setPixelRatio(Math.min(window.devicePixelRatio||1,2));rd.shadowMap.enabled=true;el.appendChild(rd.domElement);
+    const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,4/3,.1,50);
+    sc.add(new THREE.HemisphereLight(0xffffff,0x9aa4b2,.9));
+    const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(3,5,4);dl.castShadow=true;
+    Object.assign(dl.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:1,far:15});dl.shadow.mapSize.set(1024,1024);sc.add(dl);
+    const gr=new THREE.Mesh(new THREE.PlaneGeometry(8,8),new THREE.ShadowMaterial({opacity:.55}));gr.rotation.x=-Math.PI/2;gr.receiveShadow=true;sc.add(gr);
+    sc.add(new THREE.GridHelper(6,12,0x4A586E,0x2B3647));
+    const mat=c=>new THREE.MeshLambertMaterial({color:c,transparent:true});
+    const mk={skin:mat(0xE2B48C),shirt:mat(0x2447F5),legs:mat(0x4A5C82)},SPH=new THREE.SphereGeometry(1,16,12),CYL=new THREE.CylinderGeometry(.8,1,1,14);
+    const add=(g,m)=>{const x=new THREE.Mesh(g,m);x.castShadow=true;sc.add(x);return x};
+    const B={head:add(SPH,mk.skin),nose:add(SPH,mk.legs)};B.head.scale.set(.095,.12,.095);B.nose.scale.setScalar(.03);
+    B.body=[[.72,.2,.11,.2,"shirt"],[.38,.17,.095,.15,"shirt"],[.08,.1,.1,.17,"legs"]].map(r=>({r,m:add(SPH,mk[r[4]])}));
+    B.limbs=[];["L","R"].forEach(k=>{[["arm",.05,"skin"],["thigh",.078,"legs"],["shin",.058,"legs"]].forEach(([n,r,c])=>{const m=add(CYL,mk[c]);B.limbs.push({n:n+k,r,m})});
+      ["sh","hand","knee","foot","hip"].forEach(n=>{B[n+k]=add(SPH,mk[n==="sh"?"shirt":n==="hand"?"skin":"legs"]);B[n+k].scale.setScalar(n==="hand"?.055:n==="foot"?.06:.07)})});
+    const mm={};Object.keys(MUS).forEach(id=>{mm[id]=new THREE.MeshLambertMaterial({color:LVC[0],transparent:true})});
+    const mus=[];ESPEC.forEach(r=>{const sides=r[1]==="torso"?(r[5]?[-1,1]:[0]):["L","R"];sides.forEach(sd=>mus.push({r,sd,m:add(SPH,mm[r[0]])}))});
+    const bar=new THREE.Group(),bm=new THREE.MeshLambertMaterial({color:0xE3E7EE}),b1=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.5,16),bm);b1.rotation.x=Math.PI/2;b1.position.y=2.3;bar.add(b1);
+    [-.75,.75].forEach(z=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,2.3,10),bm);p.position.set(0,1.15,z);bar.add(p)});sc.add(bar);
+    const wm=new THREE.MeshLambertMaterial({color:0xB4BECE,transparent:true,opacity:0,side:THREE.DoubleSide}),wall=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.8),wm);wall.rotation.y=Math.PI/2;wall.position.y=1.4;sc.add(wall);
+    V={el,rd,sc,cam,mk,B,mus,mm,bar,wall,wm,lv:{},cur:null,from:null,to:null,t0:0,dur:900,wallMode:0,wallOp:0,az:40,el2:14,tgt:new THREE.Vector3(0,1,0),dist:4,grp:"jalon"};
+    let dr=null;
+    el.addEventListener("pointerdown",e=>{dr={x:e.clientX,y:e.clientY};el.setPointerCapture(e.pointerId)});
+    el.addEventListener("pointermove",e=>{if(!dr)return;V.az-=(e.clientX-dr.x)*.5;V.el2=Math.max(-10,Math.min(70,V.el2+(e.clientY-dr.y)*.4));dr={x:e.clientX,y:e.clientY}});
+    ["pointerup","pointercancel"].forEach(n=>el.addEventListener(n,()=>{dr=null}));
+    loadPersona();window.addEventListener("resize",fitViewer);requestAnimationFrame(loop);
+  }catch(err){V=false}
+  return V;
+}
+function fitViewer(){if(!V||!V.el.isConnected)return;const w=V.el.clientWidth,h=V.el.clientHeight;if(!w||!h)return;V.rd.setSize(w,h,false);V.cam.aspect=w/h;V.cam.updateProjectionMatrix()}
+function setView(az){if(V)V.az=az}
+function setPose(k,elId){const p=POSES[k];if(!p||!V)return;
+  V.from=V.cur?Object.assign({},V.cur):Object.assign({},p);V.to=p;V.t0=performance.now();V.dur=900;V.wallMode=p.wall;if(!V.cur)V.cur=Object.assign({},p);
+  V.grp=S.g;V.key=k;if(V.P)personaTarget(k);const a=ACT[elId]||{};Object.keys(MUS).forEach(id=>{V.lv[id]=a[id]?a[id][0]:0})}
+function replay(){if(!V||!V.to)return;V.from=V.to.ay>1?P({t:90,a:90,f:-1,bar:1,L:[0,0,0]}):P({t:22,a:265,f:-1,L:[0,0,0]});V.t0=performance.now();V.dur=2400;if(V.P)V.pf=personaCopy(V.P.PRE[V.to.ay>1?"_hang":"_plank"])}
+const ease=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+function loop(now){
+  requestAnimationFrame(loop);
+  if(!V||!V.el.isConnected||!V.cur)return;
+  const u=Math.min(1,(now-V.t0)/V.dur);let P=lerpPose(V.from,V.to,ease(u));V.cur=P;
+  if(u>=1){P=Object.assign({},P);P.t+=.5*Math.sin(now/70);P.a+=.6*Math.sin(now/55+1);P.hd+=.8*Math.sin(now/90)}  // temblor leve de sostén
+  const J=fk(P),F=frames(P,J),B=V.B,mus=MODO==="mus";if(V.P)personaFrame(now,u,mus);
+  // estilo según modo
+  const sk=V.mk;if(mus){["skin","shirt","legs"].forEach(k=>{sk[k].color.setHex(0xC9D0DA);sk[k].opacity=.3;sk[k].depthWrite=false})}
+  else{sk.skin.color.setHex(0xE2B48C);sk.shirt.color.setHex(V.grp==="jalon"?0x2447F5:0xE8501A);sk.legs.color.setHex(0x4A5C82);["skin","shirt","legs"].forEach(k=>{sk[k].opacity=1;sk[k].depthWrite=true})}
+  B.body.forEach(o=>ell(o.m,F.torso,o.r[0],o.r[1],0,0,o.r[2],o.r[3]));
+  B.head.position.set(...J.head);B.nose.position.set(...J.nose);
+  B.limbs.forEach(o=>{limb(o.m,F[o.n].A,F[o.n].B);const l=Math.hypot(...F[o.n].B.map((v,i)=>v-F[o.n].A[i]));o.m.scale.set(o.r,l,o.r)});
+  ["L","R"].forEach(k=>["sh","hand","knee","foot","hip"].forEach(n=>B[n+k].position.set(...J[n+k])));
+  // músculos
+  V.mus.forEach(o=>{const r=o.r,seg=r[1]==="torso"?"torso":r[1]+o.sd,z=r[1]==="torso"?r[5]*o.sd:0;o.m.visible=mus&&!V.P;if(mus&&!V.P)ell(o.m,F[seg],r[2],r[3],r[4],z,r[6],r[7])});
+  Object.keys(V.mm).forEach(id=>{const m=V.mm[id],l=V.lv[id]||0;m.color.setHex(LVC[l]);m.opacity=l?.95:.35;m.emissive.setHex(l?LVC[l]:0);m.emissiveIntensity=l===3?.3+.2*Math.sin(now/260):l?.15:0});
+  V.bar.visible=V.cur.ay>1;
+  if(V.wallMode){const fx=Math.max(...(V.P?V.P.feet():[J.footL[0],J.footR[0]])),bx=Math.min(...(V.P?V.P.feet():[J.footL[0],J.footR[0]]));V.wall.position.x=V.wallMode>0?fx+.06:bx-.06}
+  V.wallOp+=((V.wallMode?.3:0)-V.wallOp)*.15;V.wm.opacity=V.wallOp;V.wall.visible=V.wallOp>.01;
+  const pts=V.P?V.P.pts():[J.head,J.footL,J.footR,J.handL,J.kneeL,J.kneeR];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  pts.forEach(p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])});
+  V.tgt.lerp(new THREE.Vector3((x0+x1)/2,Math.max(.5,(y0+y1)/2),0),.08);
+  V.dist+=(Math.max(x1-x0,y1-y0,1.6)*2.5+1.2-V.dist)*.08;
+  const az=V.az*Math.PI/180,e=V.el2*Math.PI/180;
+  V.cam.position.set(V.tgt.x+V.dist*Math.cos(e)*Math.sin(az),V.tgt.y+V.dist*Math.sin(e),V.dist*Math.cos(e)*Math.cos(az));V.cam.lookAt(V.tgt);
+  V.rd.render(V.sc,V.cam);
+}
+/* ---- persona 3D real (escaneo con esqueleto) ---- */
+function loadPersona(){
+  Promise.all([fetch("persona.json").then(r=>r.json()),fetch("persona.bin").then(r=>r.arrayBuffer())]).then(([m,buf])=>{
+    const n=m.n,o=m.off,g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(buf,o.pos,n*3),3));
+    g.setAttribute("normal",new THREE.BufferAttribute(new Int8Array(buf,o.nor,n*3),3,true));
+    g.setAttribute("skinIndex",new THREE.BufferAttribute(Uint16Array.from(new Uint8Array(buf,o.si,n*4)),4));
+    const w8=new Uint8Array(buf,o.sw,n*4),sw=new Float32Array(n*4);for(let i=0;i<n*4;i++)sw[i]=w8[i]/255;
+    g.setAttribute("skinWeight",new THREE.BufferAttribute(sw,4));
+    g.setAttribute("aMus",new THREE.BufferAttribute(Float32Array.from(new Uint8Array(buf,o.mu,n)),1));
+    g.setIndex(new THREE.BufferAttribute(new Uint16Array(buf,o.idx,m.m*3),1));
+    const bones=m.bones.map(b=>{const x=new THREE.Bone();x.name=b.name;return x});
+    m.bones.forEach((b,i)=>{const r=b.r,pr=b.p>=0?m.bones[b.p].r:[0,0,0];if(b.p>=0)bones[b.p].add(bones[i]);bones[i].position.set(r[0]-pr[0],r[1]-pr[1],r[2]-pr[2])});
+    const mat=new THREE.MeshStandardMaterial({color:0xE2B48C,roughness:.6,metalness:0,side:THREE.DoubleSide});mat.skinning=true;
+    const U={uMC:{value:Array.from({length:17},()=>new THREE.Vector4(0,0,0,0))},uOn:{value:1}};
+    mat.onBeforeCompile=sh=>{sh.uniforms.uMC=U.uMC;sh.uniforms.uOn=U.uOn;
+      sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute float aMus;uniform vec4 uMC[17];uniform float uOn;varying vec4 vMc;").replace("#include <begin_vertex>","#include <begin_vertex>\nvMc=uMC[int(aMus+0.5)]*uOn;");
+      sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying vec4 vMc;").replace("#include <color_fragment>","#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vMc.rgb,vMc.a);")};
+    const mesh=new THREE.SkinnedMesh(g,mat);mesh.frustumCulled=false;mesh.castShadow=true;mesh.add(bones[0]);V.sc.add(mesh);mesh.updateMatrixWorld(true);mesh.bind(new THREE.Skeleton(bones));
+    const mk={};Object.keys(m.markers).forEach(k=>{const [bi,r]=m.markers[k],br=m.bones[bi].r,x=new THREE.Object3D();x.position.set(r[0]-br[0],r[1]-br[1],r[2]-br[2]);bones[bi].add(x);mk[k]=x});
+    const PRE={};Object.keys(m.poses).forEach(k=>{const p=m.poses[k];PRE[k]={root:new THREE.Vector3(...p.root),q:p.q.map(a=>new THREE.Quaternion(...a))}});
+    const vv=new THREE.Vector3();
+    V.P={bones,mesh,U,PRE,names:Object.keys(MUS),par:m.bones.map(b=>b.p),
+      pts(){const r=[];Object.keys(mk).forEach(k=>{mk[k].getWorldPosition(vv);r.push([vv.x,vv.y,vv.z])});return r},
+      feet(){return["toeL","toeR"].map(k=>{mk[k].getWorldPosition(vv);return vv.x})}};
+    Object.keys(V.B).forEach(k=>{const x=V.B[k];if(x&&x.isMesh)x.visible=false;if(Array.isArray(x))x.forEach(y=>{(y.m||y).visible=false})});
+    if(V.key)personaTarget(V.key);
+  }).catch(()=>{});
+}
+function personaCopy(s){return{root:s.root.clone(),q:s.q.map(x=>x.clone())}}
+function personaTarget(k){const t=V.P.PRE[k];if(!t)return;V.pf=V.pc?personaCopy(V.pc):personaCopy(t);V.pt=t;if(!V.pc)V.pc=personaCopy(t)}
+function personaFrame(now,u,mus){
+  const Pp=V.P;if(!V.pt){if(V.key)personaTarget(V.key);if(!V.pt)return}
+  const e=ease(u),a=V.pf,b=V.pt,c=V.pc,bn=Pp.bones,hold=u>=1;
+  const qz=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),hold?.008*Math.sin(now/70):0),Wp=[];
+  c.root.lerpVectors(a.root,b.root,e);
+  for(let i=0;i<bn.length;i++){
+    c.q[i].copy(a.q[i]).slerp(b.q[i],e);
+    const w=c.q[i].clone();if(hold&&(i===1||i===3||i===4||i===5||i===6))w.premultiply(qz);Wp[i]=w;
+    if(i===0){bn[0].quaternion.copy(w);bn[0].position.copy(c.root)}else bn[i].quaternion.copy(Wp[Pp.par[i]]).invert().multiply(w);
+  }
+  Pp.U.uOn.value=mus?1:0;
+  for(let i=0;i<Pp.names.length;i++){const l=V.lv[Pp.names[i]]||0,v=Pp.U.uMC.value[i+1];
+    if(!l)v.set(0,0,0,0);else{const h=LVC[l];v.set((h>>16&255)/255,(h>>8&255)/255,(h&255)/255,l===3?.85+.1*Math.sin(now/260):l===2?.75:.6)}}
+}
+function mountStage(pr){
+  const slot=$("slot");if(!slot)return;const el=els()[S.e];
+  if(initViewer()){slot.innerHTML="";slot.appendChild(V.el);fitViewer();setPose(key(el,S.p),el.id);slot.insertAdjacentHTML("beforeend",'<p class="hint">Arrastra para girar el modelo.</p>')}
+  else slot.innerHTML='<p class="hint">Tu navegador no pudo mostrar el modelo 3D (WebGL). Prueba con Chrome o Safari actualizado.</p>';
+}
+/* ---- voz ---- */
+function stopSpeak(){if("speechSynthesis" in window)speechSynthesis.cancel()}
+function speak(){
+  if(!("speechSynthesis" in window))return;
+  if(speechSynthesis.speaking){stopSpeak();return}
+  const el=els()[S.e],pr=el.progresiones[S.p];
+  const txt=`${pr.nombre}. ${pr.descripcion} Claves: ${pr.claves.join(". ")}. Errores comunes: ${pr.errores.join(". ")}. Meta: ${pr.objetivo}.`;
+  const u=new SpeechSynthesisUtterance(txt);u.lang="es-ES";u.rate=0.95;speechSynthesis.speak(u);
+}
+
+render();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
