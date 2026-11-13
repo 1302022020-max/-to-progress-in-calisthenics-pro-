@@ -1,8 +1,7 @@
 // ============================================================
 //  DATOS DEL ENTRENADOR (edita esto)
-//  nombre   : cómo lo verá el alumno en los botones y en el mensaje.
-//  whatsapp : tu número con código de país y sin "+" ni espacios (Perú = 51). Ej.: "51987654321".
-//             Si lo dejas vacío, al enviar la foto el celular deja elegir cualquier app o contacto.
-//  telegram : tu usuario de Telegram sin "@" (opcional, se usa si no hay WhatsApp).
 // ============================================================
-const ENTRENADOR = { nombre: "Henry Calistenia", telegram: "henrycalistenia" };
+const ENTRENADOR = {
+  nombre: "Henry",
+  discordWebhook: "https://discord.com/api/webhooks/1570820828579504278/N_jSHVfv32fP1LQQa52v84ctQvZk06x0AgdLwNF4l1xUBAt38eJNTDHxBLvdCc3HfBXa"
+};
