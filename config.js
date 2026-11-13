@@ -5,4 +5,4 @@
 //             Si lo dejas vacío, al enviar la foto el celular deja elegir cualquier app o contacto.
 //  telegram : tu usuario de Telegram sin "@" (opcional, se usa si no hay WhatsApp).
 // ============================================================
-const ENTRENADOR = { nombre: "", whatsapp: "", telegram: "" };
+const ENTRENADOR = { nombre: "Henry Calistenia", telegram: "henrycalistenia" };
