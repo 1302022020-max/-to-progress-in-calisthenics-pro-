@@ -34,32 +34,12 @@ async function fReducir(file){
   return new Promise(ok=>c.toBlob(ok,"image/jpeg",FOTO.calidad));
 }
 
-/* ---- mensaje y envío directo a Discord ---- */
-function fTexto(c, seg, nota, alumno) {
+/* ---- mensaje y envío con Tawk.to ---- */
+function fTexto(c, seg, nota) {
   const e = fEnt().nombre;
-  const quien = alumno ? `**Alumno:** ${alumno}\n` : "";
-  return `${quien}💪 **Progresión:** ${c.elem} – ${c.prog}` +
-         (seg ? `\n⏱️ **Tiempo sostenido:** ${seg} s` : "") +
-         (nota ? `\n📝 **Nota para ${e || "el entrenador"}:** ${nota}` : "");
-}
-
-async function fEnviar(blob, texto, nombre) {
-  const webhook = fEnt().discordWebhook;
-  if (!webhook) return "manual";
-
-  const formData = new FormData();
-  formData.append("content", texto);
-  formData.append("file", blob, nombre);
-
-  try {
-    const res = await fetch(webhook, {
-      method: "POST",
-      body: formData
-    });
-    return res.ok ? "ok" : "error";
-  } catch (e) {
-    return "error";
-  }
+  return `Hola${e ? " " + e : ""}, te envío mi foto de ${c.elem} – ${c.prog}.` +
+         (seg ? ` Tiempo sostenido: ${seg} s.` : "") +
+         (nota ? ` ${nota}` : "");
 }
 
 /* ---- ventana de envío ---- */
@@ -68,17 +48,15 @@ function fModal(blob, c, opt) {
   let m = document.getElementById("fmodal"); if (m) m.remove();
   m = document.createElement("div"); m.id = "fmodal"; m.className = "fm";
   const url = URL.createObjectURL(blob), nom = fNombre();
-  const alumnoGuardado = localStorage.getItem("cal_alumno_nombre") || "";
 
   m.innerHTML = `<div role="dialog" aria-modal="true" aria-label="Enviar foto">
     <h3 style="margin-top:0">${esc(c.elem)} · ${esc(c.prog)}</h3>
     <img src="${url}" alt="Tu foto">
-    <label class="fl">Tu nombre<input id="falumno" type="text" placeholder="Ej. Carlos" value="${esc(alumnoGuardado)}"></label>
     <label class="fl">Tiempo que sostuviste (segundos)<input id="fseg" type="number" min="0" inputmode="numeric" value="${opt.seg || ""}"></label>
     <label class="fl">Nota para ${esc(nom)} (cómo te sentiste, dudas)<textarea id="fnota" rows="3">${esc(opt.nota || "")}</textarea></label>
     <p class="hint" id="fmsg"></p>
     <div class="row" style="margin-top:10px">
-      <button class="btn" id="fsend">Enviar a ${esc(nom)}</button>
+      <button class="btn" id="fsend">Abrir chat con ${esc(nom)}</button>
       ${opt.guardada ? "" : '<button class="btn sec" id="fsave">Solo guardar</button>'}
       <button class="btn sec" id="fcancel">Cerrar</button></div></div>`;
 
@@ -86,11 +64,7 @@ function fModal(blob, c, opt) {
   let guardada = !!opt.guardada;
   const q = id => m.querySelector("#" + id), msg = t => { q("fmsg").innerHTML = t };
   const cerrar = () => { URL.revokeObjectURL(url); m.remove(); fotoInit() };
-  const datos = () => ({
-    alumno: q("falumno").value.trim(),
-    seg: +q("fseg").value || 0,
-    nota: q("fnota").value.trim()
-  });
+  const datos = () => ({ seg: +q("fseg").value || 0, nota: q("fnota").value.trim() });
 
   const guardar = async () => {
     if (guardada) return true; const d = datos();
@@ -103,28 +77,29 @@ function fModal(blob, c, opt) {
   if (q("fsave")) q("fsave").onclick = async () => { if (await guardar()) cerrar() };
 
   q("fsend").onclick = async () => {
-    const d = datos();
-    if (d.alumno) localStorage.setItem("cal_alumno_nombre", d.alumno);
-    const texto = fTexto(c, d.seg, d.nota, d.alumno);
-    
-    const btn = q("fsend");
-    btn.disabled = true;
-    btn.textContent = "Enviando...";
-    msg("");
-
+    const d = datos(), texto = fTexto(c, d.seg, d.nota);
     await guardar();
-    const r = await fEnviar(blob, texto, `${c.k}-${new Date().toISOString().slice(0, 10)}.jpg`);
 
-    if (r === "ok") {
-      msg(`✅ ¡Foto enviada con éxito a ${esc(nom)}!`);
-      setTimeout(cerrar, 1200);
-      return;
+    // Descarga la foto automáticamente para que el alumno la adjunte en Tawk.to
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${c.k}-${new Date().toISOString().slice(0, 10)}.jpg`;
+    a.click();
+
+    // Si Tawk.to está cargado, abre la ventana de chat y envía los datos de la progresión
+    if (window.Tawk_API && typeof window.Tawk_API.maximize === "function") {
+      window.Tawk_API.maximize();
+      if (typeof window.Tawk_API.addEvent === "function") {
+        window.Tawk_API.addEvent("Progresion-enviada", {
+          ejercicio: `${c.elem} - ${c.prog}`,
+          tiempo: `${d.seg} segundos`,
+          nota: d.nota || "Sin nota"
+        });
+      }
+      cerrar();
+    } else {
+      msg("El chat aún está cargando o no hay conexión a internet. Intenta de nuevo en unos segundos.");
     }
-
-    btn.disabled = false;
-    btn.textContent = `Enviar a ${esc(nom)}`;
-    const d2 = URL.createObjectURL(blob);
-    msg(`No se pudo enviar automáticamente (revisa tu internet o la URL del Webhook). Puedes <a href="${d2}" download="${esc(c.k)}.jpg">descargar la foto</a>.`);
   };
 }
 
